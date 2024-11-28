@@ -1,5 +1,5 @@
 const io = require("socket.io-client");
-
+const axios = require("axios");
 // Connect to the Socket.IO server
 const socket = io("https://sdlocationupdate.serendipity.app"); // Update the URL if your server runs elsewhere
 
@@ -780,7 +780,7 @@ const locations =  [
 ];
 
 
-const userIds = ["2661", "2659"]; // Add your user IDs here
+const users = ["2661", "2659"]; // Add your user IDs here
 // Base object template for sending data
 const baseObject = {
   activity: {
@@ -842,47 +842,93 @@ const baseObject = {
     extras: {},
     is_moving: true,
     odometer: 3666.60009765625,
-    timestamp: "2023-09-19T10:42:01.045Z",
-    uuid: "12074163-6ef5-4457-a8b0-817d08a72c82",
+    timestamp: new Date().toISOString(),
+    uuid: "12074163-6ef5-4457-a8b0-817d08a72c82" + new Date(),
   },
   user_id: "",
 };
 
 // Helper function to update lat/lon in baseObject
-// Helper function to update lat/lon and user ID in baseObject
-const updateLocationAndUser = (base, lat, lon, userId) => {
-    const updatedObject = { ...base };
-    updatedObject.live_address.lat = lat.toString();
-    updatedObject.live_address.lon = lon.toString();
-    updatedObject.location.coords.latitude = lat;
-    updatedObject.location.coords.longitude = lon;
-    updatedObject.user_id = userId;
-    return updatedObject;
-  };
-  
-  // Function to send location data for all users
-  const sendLocations = async () => {
-    for (let i = 0; i < locations.length; i++) {
-      const { lat, lon } = locations[i];
-  
-      for (const userId of userIds) {
-        // Update the baseObject with new lat/lon and userId
-        const dataToSend = updateLocationAndUser(baseObject, lat, lon, userId);
-  
-        console.log(`Sending data for user ${userId}:`, dataToSend);
-        socket.emit("location", dataToSend);
-  
-        // Wait for 1 second before sending data for the next user
-        await new Promise((resolve) => setTimeout(resolve,500));
-      }
-  
-      // Wait for 1 second before processing the next location
-      await new Promise((resolve) => setTimeout(resolve, 500));
+// Helper function to update lat/lon and user ID in baseObject// Function to fetch live address
+async function getLiveAddress(lat, lon) {
+  try {
+    const response = await axios.get("https://nominatim.openstreetmap.org/reverse", {
+      params: {
+        lat: lat,
+        lon: lon,
+        format: "json",
+      },
+    });
+
+    const data = response.data;
+    console.log(data);
+    
+    const address = data.address || {};
+    return {
+      display_name: data.display_name || "Unknown Location",
+      address: {
+        country: address.country || "",
+        state: address.state || "",
+        city: address.city || address.town || address.village || "",
+        suburb: address.suburb || "",
+        postcode: address.postcode || "",
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching live address:", error.message);
+    return null;
+  }
+}
+
+// Function to calculate direction degree
+function calculateBearing(lat1, lon1, lat2, lon2) {
+  const toRadians = (deg) => (deg * Math.PI) / 180;
+  const toDegrees = (rad) => (rad * 180) / Math.PI;
+
+  const φ1 = toRadians(lat1);
+  const φ2 = toRadians(lat2);
+  const Δλ = toRadians(lon2 - lon1);
+
+  const x = Math.sin(Δλ) * Math.cos(φ2);
+  const y = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+
+  let bearing = toDegrees(Math.atan2(x, y));
+  bearing = (bearing + 360) % 360; // Normalize to 0–360
+  return bearing;
+}
+
+// Updated loop
+async function sendLocations() {
+  for (let i = 0; i < locations.length; i++) {
+    const { lat, lon } = locations[i];
+    const liveAddress = await getLiveAddress(lat, lon);
+
+    const nextCoord = locations[i + 1] || locations[0]; // Loop back to the start
+    const directionDegree = calculateBearing(lat, lon, nextCoord.lat, nextCoord.lon);
+
+    for (let user of users) {
+      const dataToSend = {
+        ...baseObject,
+        user_id: user,
+        location: {
+          ...baseObject.location,
+          coords: { ...baseObject.location.coords,heading:directionDegree,latitude: lat, longitude: lon },
+        },
+        live_address: liveAddress || baseObject.live_address,
+        direction_degree: directionDegree,
+      };
+
+      console.log(`Sending data for user ${user}:`, dataToSend);
+      socket.emit("location", dataToSend);
     }
-  
-    console.log("All locations sent for all users.");
-    socket.disconnect();
-  };
+
+    // Delay between iterations
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+
+  console.log("All locations sent.");
+  socket.disconnect();
+}
   
   // Handle connection events
   socket.on("connect", () => {

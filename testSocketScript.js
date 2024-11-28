@@ -1,7 +1,8 @@
 const io = require("socket.io-client");
 const axios = require("axios");
 // Connect to the Socket.IO server
-const socket = io("https://sdlocationupdate.serendipity.app"); // Update the URL if your server runs elsewhere
+const socket = io(process.env.SOCKET_URL); // Update the URL if your server runs elsewhere
+// Update the URL if your server runs elsewhere
 
 const users = ["2628", "2601"]; // Add your user IDs here
 // Base object template for sending data

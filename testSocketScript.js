@@ -655,6 +655,8 @@ const locations = [
   },
 ];
 
+
+const userIds = ["2628", "2601"]; // Add your user IDs here
 // Base object template for sending data
 const baseObject = {
   activity: {
@@ -719,43 +721,64 @@ const baseObject = {
     timestamp: "2023-09-19T10:42:01.045Z",
     uuid: "12074163-6ef5-4457-a8b0-817d08a72c82",
   },
-  user_id: "2453",
+  user_id: "",
 };
 
-// Function to send location data
-const sendLocations = async () => {
-  for (let i = 0; i < locations.length; i++) {
-    const { lat, lon } = locations[i];
-
-    // Create a data object by updating the baseObject
-    const dataToSend = { ...baseObject, latitude: lat, longitude: lon };
-
-    console.log(`Sending data:`, dataToSend);
-    socket.emit("location", dataToSend);
-
-    // Wait for 1 second before sending the next location
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-
-  console.log("All locations sent.");
-  socket.disconnect();
-};
-
-// Handle connection events
-socket.on("connect", () => {
-  console.log("Connected to server.");
-  sendLocations();
-});
-
-socket.on("disconnect", () => {
-  console.log("Disconnected from server.");
-});
-
-socket.on("response", (data) => {
-  console.log("Server response:", data);
-});
-
-// Handle errors
-socket.on("connect_error", (error) => {
-  console.error("Connection error:", error);
-});
+// Helper function to update lat/lon in baseObject
+// Helper function to update lat/lon and user ID in baseObject
+const updateLocationAndUser = (base, lat, lon, userId) => {
+    const updatedObject = { ...base };
+    updatedObject.live_address.lat = lat.toString();
+    updatedObject.live_address.lon = lon.toString();
+    updatedObject.location.coords.latitude = lat;
+    updatedObject.location.coords.longitude = lon;
+    updatedObject.user_id = userId;
+    return updatedObject;
+  };
+  
+  // Function to send location data for all users
+  const sendLocations = async () => {
+    for (let i = 0; i < locations.length; i++) {
+      const { lat, lon } = locations[i];
+  
+      for (const userId of userIds) {
+        // Update the baseObject with new lat/lon and userId
+        const dataToSend = updateLocationAndUser(baseObject, lat, lon, userId);
+  
+        console.log(`Sending data for user ${userId}:`, dataToSend);
+        socket.emit("location", dataToSend);
+  
+        // Wait for 1 second before sending data for the next user
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+  
+      // Wait for 1 second before processing the next location
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  
+    console.log("All locations sent for all users.");
+    socket.disconnect();
+  };
+  
+  // Handle connection events
+  socket.on("connect", () => {
+    console.log("Connected to server.");
+    sendLocations();
+  });
+  
+  socket.on("disconnect", () => {
+    console.log("Disconnected from server.");
+  });
+  
+  socket.on("response", (data) => {
+    console.log("Server response:", data);
+  });
+  
+  // Handle errors
+  socket.on("connect_error", (error) => {
+    console.error("Connection error:", error);
+  });
+  
+  socket.on("error", (error) => {
+    console.error("Socket error:", error);
+  });

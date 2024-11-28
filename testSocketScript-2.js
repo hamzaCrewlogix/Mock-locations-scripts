@@ -873,11 +873,11 @@ const updateLocationAndUser = (base, lat, lon, userId) => {
         socket.emit("location", dataToSend);
   
         // Wait for 1 second before sending data for the next user
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve,500));
       }
   
       // Wait for 1 second before processing the next location
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   
     console.log("All locations sent for all users.");

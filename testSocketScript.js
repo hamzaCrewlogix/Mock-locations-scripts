@@ -68,7 +68,7 @@ const baseObject = {
     is_moving: true,
     odometer: 3666.60009765625,
     timestamp: new Date().toISOString(),
-    uuid: "12074163-6ef5-4457-a8b0-817d08a72c82" + new Date(),
+    uuid: "12074163-6ef5-445" + new Date().getTime(),
   },
   user_id: "",
 };
@@ -76,11 +76,12 @@ const baseObject = {
 // Function to fetch live address
 async function getLiveAddress(lat, lon) {
     try {
-      const response = await axios.get("https://nominatim.openstreetmap.org/reverse", {
+      const response = await axios.get(process.env.NOMINATUM_URL, {
         params: {
           lat: lat,
           lon: lon,
           format: "json",
+          "accept-language": "en"
         },
       });
   
@@ -147,7 +148,7 @@ async function getLiveAddress(lat, lon) {
       }
   
       // Delay between iterations
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   
     console.log("All locations sent.");

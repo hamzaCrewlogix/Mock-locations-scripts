@@ -5,7 +5,7 @@ require('dotenv').config();
 const socket = io(process.env.SOCKET_URL); // Update the URL if your server runs elsewhere
  // Update the URL if your server runs elsewhere
 
-const users = ["2628", "2601"]; // Add your user IDs here
+const users = ["2628","2601"]; // Add your user IDs here
 // Base object template for sending data
 const baseObject = {
   activity: {
@@ -61,7 +61,7 @@ const baseObject = {
       heading_accuracy: -1,
       latitude: 31.5176868,
       longitude: 74.3414852,
-      speed: 0.62,
+      speed: 2,
       speed_accuracy: -1,
     },
     extras: {},

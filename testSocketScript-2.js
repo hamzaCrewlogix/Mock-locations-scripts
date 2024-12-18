@@ -74,6 +74,8 @@ const baseObject = {
   user_id: "",
 };
 
+// console.log('tiume', new Date().toISOString());
+// return
 // Helper function to update lat/lon in baseObject
 // Helper function to update lat/lon and user ID in baseObject// Function to fetch live address
 async function getLiveAddress(lat, lon) {
@@ -140,7 +142,10 @@ async function sendLocations() {
         user_id: user,
         location: {
           ...baseObject.location,
-          coords: { ...baseObject.location.coords,heading:directionDegree,latitude: lat, longitude: lon },
+          timestamp:new Date().toISOString(),
+          coords: { ...baseObject.location.coords,heading:directionDegree,latitude: lat, longitude: lon,
+            speed : Math.random() * (2 - 0.62) + 0.62
+           },
         },
         live_address: liveAddress || baseObject.live_address,
         direction_degree: directionDegree,
@@ -151,7 +156,7 @@ async function sendLocations() {
     }
 
     // Delay between iterations
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
   console.log("All locations sent.");

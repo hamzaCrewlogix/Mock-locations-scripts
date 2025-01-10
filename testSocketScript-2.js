@@ -6,7 +6,8 @@ const socket = io(process.env.SOCKET_URL); // Update the URL if your server runs
 
 // Latitude and longitude array
 
-const users = ["2659","2661"]; // Add your user IDs here
+const users = ["2661","2659","2601","2628","2444"]; // Add your user IDs here
+// const users = ["2661"]; // Add your user IDs here
 // Base object template for sending data
 const baseObject = {
   activity: {

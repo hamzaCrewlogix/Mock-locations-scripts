@@ -1,0 +1,5 @@
+SOCKET_URL = 
+NOMINATUM_URL = 
+MQTT_BROKER_URL=  # Update to your broker (e.g., mqtt://your-emqx.com:1883)
+MQTT_USERNAME=            # Optional; leave blank if no auth
+MQTT_PASSWORD=            # Optional

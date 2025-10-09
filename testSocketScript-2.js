@@ -6,8 +6,8 @@ const socket = io(process.env.SOCKET_URL); // Update the URL if your server runs
 
 // Latitude and longitude array
 
-
-const users = ["2659","2661"]; // Add your user IDs here
+const users = ["2661","2659","2601","2628","2444"]; // Add your user IDs here
+// const users = ["2661"]; // Add your user IDs here
 // Base object template for sending data
 const baseObject = {
   activity: {
@@ -75,6 +75,8 @@ const baseObject = {
   user_id: "",
 };
 
+// console.log('tiume', new Date().toISOString());
+// return
 // Helper function to update lat/lon in baseObject
 // Helper function to update lat/lon and user ID in baseObject// Function to fetch live address
 async function getLiveAddress(lat, lon) {
@@ -141,18 +143,21 @@ async function sendLocations() {
         user_id: user,
         location: {
           ...baseObject.location,
-          coords: { ...baseObject.location.coords,heading:directionDegree,latitude: lat, longitude: lon },
+          timestamp:new Date().toISOString(),
+          coords: { ...baseObject.location.coords,heading:directionDegree,latitude: lat, longitude: lon,
+            speed : Math.random() * (2 - 0.62) + 0.62
+           },
         },
         live_address: liveAddress || baseObject.live_address,
         direction_degree: directionDegree,
       };
 
-      console.log(`Sending data for user ${user}:`, dataToSend);
+      console.log(`Sending data for user ${user}:`, dataToSend, `for index ${i}`);
       socket.emit("location", dataToSend);
     }
 
     // Delay between iterations
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
   console.log("All locations sent.");
